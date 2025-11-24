@@ -1,73 +1,114 @@
-# React + TypeScript + Vite
+# FLEWS - Flood Early Warning System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A real-time flood monitoring and early warning application with an interactive Mapbox map interface.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🗺️ Interactive Mapbox map centered at specified coordinates (34°4'9.606"N, 72°38'36.1464"E)
+- 🎨 Beautiful UI with Tailwind CSS and SCSS
+- ⚡ Built with React, TypeScript, and Vite
+- 🎭 Smooth animations using Framer Motion
+- 📱 Fully responsive design
+- 🌊 Real-time flood monitoring and alerts
 
-## React Compiler
+## Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js (v18 or higher recommended)
+- npm or yarn
+- A Mapbox account and access token
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 1. Clone the repository
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone <your-repo-url>
+cd FLEWS
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Install dependencies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 3. Set up Mapbox Access Token
+
+1. Go to [Mapbox](https://account.mapbox.com/access-tokens/) and create a free account
+2. Create a new access token or use your default public token
+3. Create a `.env` file in the root directory:
+
+```bash
+cp .env.example .env
+```
+
+4. Add your Mapbox token to the `.env` file:
+
+```
+VITE_MAPBOX_TOKEN=your_actual_mapbox_token_here
+```
+
+### 4. Run the development server
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173` (or another port if 5173 is in use).
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## Technologies Used
+
+- **React 19** - UI library
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **Mapbox GL JS** - Interactive maps
+- **Tailwind CSS v4** - Utility-first CSS framework
+- **@tailwindcss/postcss** - Tailwind PostCSS plugin
+- **SCSS** - CSS preprocessor
+- **Framer Motion** - Animation library
+- **Chakra UI** - Component library
+- **Zustand** - State management
+
+## Customization
+
+### Changing Map Center
+
+To change the map center coordinates, edit `src/components/MapBackground.tsx`:
+
+```typescript
+const lat = 34.069335;  // Your latitude
+const lng = 72.643374;  // Your longitude
+```
+
+### Changing Map Style
+
+You can change the map style in `src/components/MapBackground.tsx`:
+
+```typescript
+style: 'mapbox://styles/mapbox/dark-v11',
+```
+
+Available styles:
+- `mapbox://styles/mapbox/streets-v12`
+- `mapbox://styles/mapbox/outdoors-v12`
+- `mapbox://styles/mapbox/light-v11`
+- `mapbox://styles/mapbox/dark-v11`
+- `mapbox://styles/mapbox/satellite-v9`
+- `mapbox://styles/mapbox/satellite-streets-v12`
+- `mapbox://styles/mapbox/navigation-day-v1`
+- `mapbox://styles/mapbox/navigation-night-v1`
+
+## License
+
+This project is free and open source (FOSS).
+
+## Contributors
+
+Hamza Bin Aamir, Ahmed Abdullah, Syed Areeb Zaheer, Azeem Liaqat
