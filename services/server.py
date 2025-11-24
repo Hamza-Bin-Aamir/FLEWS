@@ -5,11 +5,14 @@ Provides REST API endpoints for flood risk data and alerts
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional, Dict, List
 import uvicorn
 
 # Import service modules
 from alert import get_alert_summary
 from flood_risk import get_flood_risk_areas
+from chatbot import get_chat_response
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -28,6 +31,16 @@ app.add_middleware(
 )
 
 
+# ============================================================================
+# REQUEST MODELS
+# ============================================================================
+
+class ChatRequest(BaseModel):
+    """Request model for chat endpoint"""
+    message: str
+    context: Optional[Dict] = None
+
+
 @app.get("/")
 def root():
     """Root endpoint - API information"""
@@ -38,6 +51,7 @@ def root():
         "endpoints": {
             "alerts": "/api/alerts",
             "flood_risk": "/api/flood-risk",
+            "chat": "/api/chat",
             "health": "/api/health"
         }
     }
@@ -101,6 +115,36 @@ def get_flood_risk(min_lat: float = None, max_lat: float = None,
 
 
 # ============================================================================
+# CHATBOT ENDPOINTS
+# ============================================================================
+
+@app.post("/api/chat")
+def chat(request: ChatRequest):
+    """
+    Process chatbot messages and return responses
+    
+    Supports:
+    - Simple status questions (US17)
+    - Dynamic recommendations based on context (US16)
+    - Emergency guidance
+    - Evacuation information
+    
+    Request body:
+        message: User's message
+        context: Optional context with location and flood_data
+    
+    Returns:
+        response: Chatbot's text response
+        recommendations: List of actionable recommendations
+    """
+    try:
+        result = get_chat_response(request.message, request.context)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
 # SERVER STARTUP
 # ============================================================================
 
@@ -117,20 +161,3 @@ if __name__ == "__main__":
         log_level="info"
     )
 
-
-# ============================================================================
-# SERVER STARTUP
-# ============================================================================
-
-if __name__ == "__main__":
-    print("Starting FLEWS API Server...")
-    print("API Documentation available at: http://localhost:8000/docs")
-    print("Frontend should run on: http://localhost:5173")
-    
-    uvicorn.run(
-        "server:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,  # Enable auto-reload during development
-        log_level="info"
-    )

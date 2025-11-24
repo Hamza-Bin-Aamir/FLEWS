@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import MapBackground from './MapBackground';
+import Chatbot from './Chatbot';
 import './LandingPage.scss';
 
 const LandingPage = () => {
@@ -24,6 +25,9 @@ const LandingPage = () => {
       <div className="map-view">
         <MapBackground />
       </div>
+
+      {/* Chatbot - Floating assistant */}
+      <Chatbot />
     </div>
   );
 };
