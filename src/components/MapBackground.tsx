@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import MapSearch from './MapSearch';
+import AlertNotifications from './AlertNotifications';
+import { useFloodData } from '../hooks/useFloodData';
 import './MapBackground.scss';
 
 // Add your Mapbox access token here
@@ -9,8 +12,51 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'your-mapbox-token-her
 const MapBackground: React.FC = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const searchMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([72.643374, 34.069335]);
+
+  // Use flood data hook to fetch and display tiles
+  const { floodTiles, alertSummary, loading: dataLoading, error: dataError } = useFloodData(mapRef.current);
+
+  const handleLocationSelect = (coordinates: [number, number], placeName: string) => {
+    if (!mapRef.current) return;
+
+    // Fly to the selected location
+    mapRef.current.flyTo({
+      center: coordinates,
+      zoom: 14,
+      duration: 2000,
+    });
+
+    // Remove existing search marker if any
+    if (searchMarkerRef.current) {
+      searchMarkerRef.current.remove();
+    }
+
+    // Create a custom search marker element
+    const searchMarkerEl = document.createElement('div');
+    searchMarkerEl.className = 'search-marker';
+    searchMarkerEl.innerHTML = '📍';
+    searchMarkerEl.style.fontSize = '32px';
+    searchMarkerEl.style.cursor = 'pointer';
+
+    // Add new marker at searched location
+    searchMarkerRef.current = new mapboxgl.Marker({
+      element: searchMarkerEl,
+      anchor: 'bottom',
+    })
+      .setLngLat(coordinates)
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 })
+          .setHTML(`<div style="padding: 0.5rem; color: #1a202c;"><strong>${placeName}</strong></div>`)
+      )
+      .addTo(mapRef.current);
+
+    // Show popup automatically
+    searchMarkerRef.current.togglePopup();
+  };
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -42,6 +88,14 @@ const MapBackground: React.FC = () => {
         console.log('Map loaded successfully');
         setIsLoading(false);
         setMapError(null);
+      });
+
+      // Update map center when user moves the map
+      mapRef.current.on('moveend', () => {
+        if (mapRef.current) {
+          const center = mapRef.current.getCenter();
+          setMapCenter([center.lng, center.lat]);
+        }
       });
 
       // Add error handler
@@ -90,6 +144,38 @@ const MapBackground: React.FC = () => {
   return (
     <div className="map-wrapper">
       <div ref={mapContainerRef} className="map-container" />
+      
+      {/* Search Component */}
+      {!mapError && !isLoading && (
+        <MapSearch 
+          onLocationSelect={handleLocationSelect}
+          mapboxToken={MAPBOX_TOKEN}
+          currentCenter={mapCenter}
+        />
+      )}
+
+      {/* Search Component */}
+      {!mapError && !isLoading && (
+        <MapSearch 
+          onLocationSelect={handleLocationSelect}
+          mapboxToken={MAPBOX_TOKEN}
+          currentCenter={mapCenter}
+        />
+      )}
+
+      {/* Live Alert Notifications */}
+      {!mapError && !isLoading && alertSummary && alertSummary.alerts && (
+        <AlertNotifications 
+          alerts={alertSummary.alerts}
+        />
+      )}
+
+      {/* Flood Data Error */}
+      {!mapError && !isLoading && dataError && (
+        <div className="data-error-banner">
+          ⚠️ Unable to load flood data: {dataError}
+        </div>
+      )}
       
       {/* Loading Indicator */}
       {isLoading && !mapError && (

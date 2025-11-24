@@ -20,6 +20,62 @@
     }
   }
 
+  // Custom search marker styling
+  :global(.search-marker) {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    transition: transform 0.2s ease;
+    animation: markerBounce 0.5s ease;
+
+    &:hover {
+      transform: scale(1.15);
+    }
+  }
+
+  // Data status banners
+  .data-error-banner {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(239, 68, 68, 0.95);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 9;
+    max-width: 300px;
+
+    @media (max-width: 768px) {
+      top: 4rem;
+      right: 0.75rem;
+      left: 0.75rem;
+      max-width: none;
+    }
+  }
+
+  .data-status-banner {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(59, 130, 246, 0.95);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 9;
+
+    @media (max-width: 768px) {
+      top: 4rem;
+      right: 0.75rem;
+      left: 0.75rem;
+      font-size: 0.85rem;
+      padding: 0.625rem 1rem;
+    }
+  }
+
   .map-overlay {
     position: absolute;
     top: 0;
@@ -119,5 +175,19 @@
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes markerBounce {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(5px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
