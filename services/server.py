@@ -37,6 +37,7 @@ from retraining_scheduler import (
     collect_weather_data,
     retrain_models
 )
+from data_trends import get_rainfall_trends, get_river_level_trends, get_combined_trends
 
 # Try to import ML training function
 try:
@@ -664,6 +665,73 @@ async def trigger_retraining():
         return {"message": "Retraining complete", "results": results}
     else:
         return {"message": "Retraining failed or insufficient data", "results": None}
+
+
+# ============================================================================
+# DATA TRENDS ENDPOINTS (Charts & Visualizations)
+# ============================================================================
+
+@app.get("/api/trends/rainfall")
+async def trends_rainfall(lat: float, lon: float, days: int = 7):
+    """
+    Get rainfall trend data for visualization charts
+    
+    Query parameters:
+        lat: Latitude of the location
+        lon: Longitude of the location
+        days: Number of days of historical data (default: 7)
+    
+    Returns:
+        Historical rainfall data and forecasts formatted for charting
+    """
+    try:
+        days = min(max(days, 1), 30)  # Clamp to 1-30 days
+        result = await get_rainfall_trends(lat, lon, days)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/trends/river-level")
+async def trends_river_level(lat: float, lon: float, days: int = 7):
+    """
+    Get river level trend data for visualization charts
+    
+    Query parameters:
+        lat: Latitude of the location
+        lon: Longitude of the location
+        days: Number of days of historical data (default: 7)
+    
+    Returns:
+        River level history and forecasts with threshold indicators
+    """
+    try:
+        days = min(max(days, 1), 30)  # Clamp to 1-30 days
+        result = await get_river_level_trends(lat, lon, days)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/trends/combined")
+async def trends_combined(lat: float, lon: float, days: int = 7):
+    """
+    Get combined rainfall and river level trends with correlation analysis
+    
+    Query parameters:
+        lat: Latitude of the location
+        lon: Longitude of the location
+        days: Number of days of historical data (default: 7)
+    
+    Returns:
+        Combined data for both parameters with correlation analysis
+    """
+    try:
+        days = min(max(days, 1), 30)  # Clamp to 1-30 days
+        result = await get_combined_trends(lat, lon, days)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================

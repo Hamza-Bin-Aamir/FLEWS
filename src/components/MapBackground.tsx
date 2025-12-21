@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import MapSearch from './MapSearch';
 import AlertNotifications from './AlertNotifications';
 import MLPredictionPanel from './MLPredictionPanel';
+import DataTrendsPanel from './DataTrendsPanel';  // Add this import
 import { useFloodData } from '../hooks/useFloodData';
 import './MapBackground.scss';
 
@@ -27,6 +28,7 @@ const MapBackground: React.FC = () => {
   const [mapCenter, setMapCenter] = useState<[number, number]>([72.643374, 34.069335]);
   const [demoMode, setDemoMode] = useState(false);
   const [showMLPanel, setShowMLPanel] = useState(false);
+  const [showTrendsPanel, setShowTrendsPanel] = useState(false);  // Add this state
 
   // Use flood data hook to fetch and display tiles
   const { weatherInfluence, dataSource, alertSummary, error: dataError } = useFloodData(mapInstance, demoMode);
@@ -250,6 +252,17 @@ const MapBackground: React.FC = () => {
         </button>
       )}
 
+      {/* Data Trends Toggle Button - Add this */}
+      {!mapError && !isLoading && (
+        <button 
+          className={`trends-toggle-button ${showTrendsPanel ? 'active' : ''}`}
+          onClick={() => setShowTrendsPanel(!showTrendsPanel)}
+          title="Toggle Data Trends"
+        >
+          📊 {showTrendsPanel ? 'Hide' : 'Data'} Trends
+        </button>
+      )}
+
       {/* ML Prediction Panel */}
       {!mapError && !isLoading && showMLPanel && (
         <div className="ml-panel-container">
@@ -258,6 +271,17 @@ const MapBackground: React.FC = () => {
             lon={mapCenter[0]}
             demoMode={demoMode}
             onClose={() => setShowMLPanel(false)}
+          />
+        </div>
+      )}
+
+      {/* Data Trends Panel - Add this */}
+      {!mapError && !isLoading && showTrendsPanel && (
+        <div className="trends-panel-container">
+          <DataTrendsPanel
+            lat={mapCenter[1]}
+            lon={mapCenter[0]}
+            onClose={() => setShowTrendsPanel(false)}
           />
         </div>
       )}

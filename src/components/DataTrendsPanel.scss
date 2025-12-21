@@ -1,0 +1,343 @@
+.data-trends-panel {
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 12px;
+  padding: 1rem;
+  color: white;
+  width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+
+      &:hover {
+        color: white;
+      }
+    }
+  }
+
+  .tab-navigation {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.7);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+
+      &.active {
+        background: rgba(59, 130, 246, 0.3);
+        border-color: #3b82f6;
+        color: white;
+      }
+    }
+  }
+
+  .time-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    label {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .time-buttons {
+      display: flex;
+      gap: 0.25rem;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.25rem;
+      border-radius: 8px;
+
+      button {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.6);
+        padding: 0.4rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+        }
+
+        &.active {
+          background: #3b82f6;
+          color: white;
+        }
+      }
+    }
+  }
+
+  .chart-section {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .river-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    .status-label {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .current-level {
+      margin-left: auto;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #06b6d4;
+    }
+  }
+
+  .chart-container {
+    overflow-x: auto;
+    margin-bottom: 0.75rem;
+
+    svg {
+      display: block;
+    }
+  }
+
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.8);
+
+      .legend-color {
+        width: 16px;
+        height: 3px;
+        border-radius: 2px;
+
+        &.dashed {
+          background: repeating-linear-gradient(
+            90deg,
+            currentColor,
+            currentColor 4px,
+            transparent 4px,
+            transparent 8px
+          );
+          background-color: transparent !important;
+        }
+      }
+    }
+  }
+
+  .summary-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+
+    .stat-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.5rem;
+      border-radius: 6px;
+      text-align: center;
+
+      .stat-label {
+        display: block;
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #3b82f6;
+      }
+    }
+  }
+
+  .threshold-info {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+
+    .threshold-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+
+      .threshold-label {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .threshold-value {
+        font-weight: 600;
+
+        &.warning {
+          color: #f59e0b;
+        }
+
+        &.danger {
+          color: #ef4444;
+        }
+      }
+    }
+  }
+
+  .panel-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    .update-time {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .refresh-btn {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #3b82f6;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background: rgba(59, 130, 246, 0.3);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .loading {
+    text-align: center;
+    padding: 2rem 1rem;
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.7);
+      margin: 0;
+    }
+  }
+
+  .error {
+    text-align: center;
+    padding: 1rem;
+
+    p {
+      color: #f87171;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+
+      &:hover {
+        background: #2563eb;
+      }
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}

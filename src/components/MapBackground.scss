@@ -390,6 +390,40 @@
   }
 }
 
+// Data Trends Toggle Button - ADD THIS
+.trends-toggle-button {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 25rem;
+  z-index: 15;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  }
+
+  @media (max-width: 768px) {
+    bottom: 1rem;
+    right: 12rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
 // ML Panel Container
 .ml-panel-container {
   position: absolute;
@@ -404,6 +438,26 @@
     left: 0.5rem;
 
     .ml-prediction-panel {
+      width: 100%;
+      max-height: 60vh;
+    }
+  }
+}
+
+// Data Trends Panel Container - ADD THIS
+.trends-panel-container {
+  position: absolute;
+  bottom: 5rem;
+  left: 1rem;
+  z-index: 20;
+  animation: slideUp 0.3s ease;
+
+  @media (max-width: 768px) {
+    bottom: 4rem;
+    right: 0.5rem;
+    left: 0.5rem;
+
+    .data-trends-panel {
       width: 100%;
       max-height: 60vh;
     }

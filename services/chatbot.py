@@ -8,7 +8,7 @@ import os
 import re
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
-import google.genai as genai
+import google.generativeai as genai  # Fixed import
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -20,7 +20,7 @@ from flood_risk import get_flood_risk_areas
 # Configure Gemini API
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 if GEMINI_API_KEY and GEMINI_API_KEY != 'your_gemini_api_key_here':
-    os.environ['GOOGLE_API_KEY'] = GEMINI_API_KEY
+    genai.configure(api_key=GEMINI_API_KEY)  # Fixed configuration
     GEMINI_AVAILABLE = True
 else:
     GEMINI_AVAILABLE = False
@@ -38,16 +38,15 @@ class FLEWSChatbot:
     def __init__(self):
         """Initialize the chatbot with Gemini model and safety guidelines"""
         
-        # Initialize Gemini client if available
+        # Initialize Gemini model if available
         if GEMINI_AVAILABLE:
             try:
-                self.client = genai.Client()
-                self.model_name = 'gemini-2.5-flash'
+                self.model = genai.GenerativeModel('gemini-1.5-flash')  # Fixed initialization
             except Exception as e:
-                print(f"Error initializing Gemini client: {e}")
-                self.client = None
+                print(f"Error initializing Gemini model: {e}")
+                self.model = None
         else:
-            self.client = None
+            self.model = None
         
         # System prompt for Gemini to guide its responses
         self.system_prompt = """You are FLEWS Assistant, an AI-powered flood early warning system chatbot for Pakistan.
@@ -149,7 +148,7 @@ Emergency Contacts in Pakistan:
         context_str = self._build_context_string(location, flood_data)
         
         # If Gemini is available, use it
-        if GEMINI_AVAILABLE and self.client:
+        if GEMINI_AVAILABLE and self.model:  # Changed from self.client to self.model
             try:
                 return self._get_gemini_response(message, context_str, location, flood_data)
             except Exception as e:
@@ -219,11 +218,8 @@ Please provide:
 
 Format your response naturally and conversationally. If recommending actions, list them clearly."""
 
-        # Generate response using new client pattern
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=full_prompt
-        )
+        # Generate response using the model
+        response = self.model.generate_content(full_prompt)  # Fixed API call
         response_text = response.text
         
         # Extract recommendations if present
