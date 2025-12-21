@@ -6,6 +6,36 @@ interface FloodTile {
   status: 'Safe' | 'At Risk' | 'Flooded';
   coordinates: [number, number][];
   last_updated: string;
+  weather_influenced?: boolean;
+  weather_upgraded?: boolean;
+  weather_downgraded?: boolean;
+}
+
+// Weather influence data from the API
+interface WeatherInfluence {
+  location: { lat: number; lon: number };
+  risk_level: 'Safe' | 'At Risk' | 'Flooded';
+  severity: 'low_risk' | 'medium_risk' | 'high_risk';
+  total_score: number;
+  current_conditions?: {
+    condition: string;
+    description: string;
+    temperature: number;
+    humidity: number;
+    rain_1h_mm: number;
+    rain_3h_mm: number;
+  };
+  timestamp: string;
+}
+
+// Weather data included in alerts when using real-time weather API
+interface AlertWeatherData {
+  rain_1h_mm: number;
+  rain_3h_mm: number;
+  humidity: number;
+  temperature: number;
+  condition: string;
+  forecast_rain_24h_mm: number;
 }
 
 interface Alert {
@@ -18,6 +48,9 @@ interface Alert {
   message: string;
   issued_at: string;
   issued_minutes_ago: number;
+  // Weather data (only present when using real-time weather API)
+  weather_data?: AlertWeatherData;
+  risk_score?: number;
 }
 
 interface AlertSummary {
@@ -29,6 +62,7 @@ interface AlertSummary {
     total: number;
   };
   last_updated: string;
+  data_source?: 'openweathermap_realtime' | 'demo_simulation' | 'simulated';
 }
 
 const API_BASE_URL = '/api';
@@ -42,20 +76,21 @@ const STATUS_COLORS = {
 
 const STATUS_OPACITY = 0.1; // Balanced opacity - visible but not blocking map
 
-export const useFloodData = (map: mapboxgl.Map | null) => {
+export const useFloodData = (map: mapboxgl.Map | null, demoMode: boolean = false) => {
   const [floodTiles, setFloodTiles] = useState<FloodTile[]>([]);
+  const [weatherInfluence, setWeatherInfluence] = useState<WeatherInfluence | null>(null);
+  const [dataSource, setDataSource] = useState<'weather_enhanced' | 'geographical' | null>(null);
   const [alertSummary, setAlertSummary] = useState<AlertSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollIntervalRef = useRef<number | undefined>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const tilesCacheRef = useRef<Map<string, FloodTile[]>>(new Map());
 
   // Fetch flood risk tiles for visible region
   useEffect(() => {
+    if (!map) return;
+    
     const fetchFloodTiles = async () => {
-      if (!map) return;
-      
       // Cancel any ongoing request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -73,22 +108,12 @@ export const useFloodData = (map: mapboxgl.Map | null) => {
           max_lon: bounds.getEast().toFixed(4)
         });
         
-        // Create cache key from bounds
-        const cacheKey = params.toString();
-        
-        // Check cache first
-        if (tilesCacheRef.current.has(cacheKey)) {
-          console.log('Using cached tiles');
-          setFloodTiles(tilesCacheRef.current.get(cacheKey)!);
-          return;
+        // Add demo mode parameter
+        if (demoMode) {
+          params.append('demo', 'true');
         }
         
-        console.log('Fetching flood tiles for bounds:', {
-          south: bounds.getSouth(),
-          north: bounds.getNorth(),
-          west: bounds.getWest(),
-          east: bounds.getEast()
-        });
+        console.log(`Fetching flood tiles (demo=${demoMode})`);
         
         // Create new abort controller for this request
         abortControllerRef.current = new AbortController();
@@ -99,20 +124,22 @@ export const useFloodData = (map: mapboxgl.Map | null) => {
         
         if (!response.ok) throw new Error('Failed to fetch flood risk data');
         const data = await response.json();
-        console.log(`Received ${data.tiles?.length || 0} flood tiles`);
+        console.log(`Received ${data.tiles?.length || 0} flood tiles (demo=${demoMode})`);
         
         const tiles = data.tiles || [];
         setFloodTiles(tiles);
         
-        // Cache the tiles
-        tilesCacheRef.current.set(cacheKey, tiles);
+        // Handle weather influence data
+        if (data.weather_influence) {
+          setWeatherInfluence(data.weather_influence);
+          console.log('Weather influence applied:', data.weather_influence.severity);
+        } else {
+          setWeatherInfluence(null);
+        }
         
-        // Limit cache size to 10 entries (keep most recent)
-        if (tilesCacheRef.current.size > 10) {
-          const firstKey = tilesCacheRef.current.keys().next().value;
-          if (firstKey) {
-            tilesCacheRef.current.delete(firstKey);
-          }
+        // Track data source
+        if (data.data_source) {
+          setDataSource(data.data_source);
         }
         
         setError(null);
@@ -126,46 +153,48 @@ export const useFloodData = (map: mapboxgl.Map | null) => {
       }
     };
 
-    if (map) {
-      const initFetch = () => {
-        fetchFloodTiles();
-        
-        // Refetch IMMEDIATELY when map moves or zooms (no debounce)
-        const handleMapMove = () => {
-          fetchFloodTiles();
-        };
-        
-        // Use 'move' instead of 'moveend' for instant response
-        map.on('moveend', handleMapMove);
-        map.on('zoomend', handleMapMove);
-        
-        // Poll for updates every 60 seconds (increased from 30)
-        pollIntervalRef.current = window.setInterval(fetchFloodTiles, 60000);
-        
-        return () => {
-          map.off('moveend', handleMapMove);
-          map.off('zoomend', handleMapMove);
-          if (pollIntervalRef.current) window.clearInterval(pollIntervalRef.current);
-          if (abortControllerRef.current) abortControllerRef.current.abort();
-        };
-      };
+    // Initial fetch
+    fetchFloodTiles();
+    
+    // Refetch when map moves or zooms
+    const handleMapMove = () => {
+      fetchFloodTiles();
+    };
+    
+    map.on('moveend', handleMapMove);
+    map.on('zoomend', handleMapMove);
+    
+    // Poll for updates every 60 seconds
+    pollIntervalRef.current = window.setInterval(fetchFloodTiles, 60000);
+    
+    // Cleanup
+    return () => {
+      map.off('moveend', handleMapMove);
+      map.off('zoomend', handleMapMove);
+      if (pollIntervalRef.current) window.clearInterval(pollIntervalRef.current);
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
+  }, [map, demoMode]);
 
-      if (map.isStyleLoaded()) {
-        return initFetch();
-      } else {
-        map.once('load', initFetch);
-      }
-    }
-  }, [map]);
-
-  // Fetch alert summary
+  // Fetch alert summary (using real-time weather data)
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/alerts`);
+        // Build URL with demo parameter if needed
+        const params = new URLSearchParams();
+        if (demoMode) {
+          params.append('demo', 'true');
+        }
+        const url = `${API_BASE_URL}/alerts${params.toString() ? '?' + params.toString() : ''}`;
+        
+        // Fetch alerts with real-time weather data (use_weather=true is default)
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch alerts');
         const data = await response.json();
         setAlertSummary(data);
+        
+        // Log data source for debugging
+        console.log(`Alerts loaded from: ${data.data_source || 'unknown'} (demo=${demoMode})`);
       } catch (err) {
         console.error('Error fetching alerts:', err);
       } finally {
@@ -174,10 +203,10 @@ export const useFloodData = (map: mapboxgl.Map | null) => {
     };
 
     fetchAlerts();
-    // Poll for updates every 30 seconds
-    const interval = window.setInterval(fetchAlerts, 30000);
+    // Poll for updates every 60 seconds (weather data updates every 10 min on API side)
+    const interval = window.setInterval(fetchAlerts, 60000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [demoMode]);
 
   // Add tiles to map as layers
   useEffect(() => {
@@ -235,7 +264,10 @@ export const useFloodData = (map: mapboxgl.Map | null) => {
             properties: {
               id: tile.id,
               status: tile.status,
-              last_updated: tile.last_updated
+              last_updated: tile.last_updated,
+              weather_influenced: tile.weather_influenced || false,
+              weather_upgraded: tile.weather_upgraded || false,
+              weather_downgraded: tile.weather_downgraded || false
             }
           }))
         };
@@ -272,13 +304,25 @@ export const useFloodData = (map: mapboxgl.Map | null) => {
           
           const feature = e.features[0];
           const properties = feature.properties;
+          
+          // Build weather badge if applicable
+          let weatherBadge = '';
+          if (properties?.weather_influenced) {
+            if (properties?.weather_upgraded) {
+              weatherBadge = '<span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 4px;">⬆ Weather Risk</span>';
+            } else if (properties?.weather_downgraded) {
+              weatherBadge = '<span style="background: #22c55e; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 4px;">⬇ Clear Weather</span>';
+            } else {
+              weatherBadge = '<span style="background: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 4px;">🌧 Weather Data</span>';
+            }
+          }
 
           new mapboxgl.Popup()
             .setLngLat(e.lngLat)
             .setHTML(`
               <div style="padding: 8px; min-width: 150px;">
                 <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: ${STATUS_COLORS[properties?.status as keyof typeof STATUS_COLORS]};">
-                  Status: ${properties?.status || 'Unknown'}
+                  Status: ${properties?.status || 'Unknown'} ${weatherBadge}
                 </h3>
                 <p style="margin: 4px 0; font-size: 12px; color: #666;">
                   Tile ID: ${properties?.id || 'N/A'}
@@ -286,6 +330,7 @@ export const useFloodData = (map: mapboxgl.Map | null) => {
                 <p style="margin: 4px 0; font-size: 11px; color: #999;">
                   Updated: ${properties?.last_updated ? new Date(properties.last_updated).toLocaleString() : 'N/A'}
                 </p>
+                ${properties?.weather_influenced ? '<p style="margin: 4px 0; font-size: 10px; color: #3b82f6;">📡 Real-time weather data applied</p>' : ''}
               </div>
             `)
             .addTo(map);
@@ -317,6 +362,8 @@ export const useFloodData = (map: mapboxgl.Map | null) => {
 
   return {
     floodTiles,
+    weatherInfluence,
+    dataSource,
     alertSummary,
     loading,
     error

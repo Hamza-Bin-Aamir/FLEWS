@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapSearch from './MapSearch';
 import AlertNotifications from './AlertNotifications';
+import MLPredictionPanel from './MLPredictionPanel';
 import { useFloodData } from '../hooks/useFloodData';
 import './MapBackground.scss';
 
@@ -9,16 +10,26 @@ import './MapBackground.scss';
 // You can get one from https://www.mapbox.com/
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'your-mapbox-token-here';
 
+// Weather severity colors for the badge
+const SEVERITY_COLORS = {
+  'low_risk': '#22c55e',
+  'medium_risk': '#f59e0b',
+  'high_risk': '#ef4444'
+};
+
 const MapBackground: React.FC = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const searchMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mapCenter, setMapCenter] = useState<[number, number]>([72.643374, 34.069335]);
+  const [demoMode, setDemoMode] = useState(false);
+  const [showMLPanel, setShowMLPanel] = useState(false);
 
   // Use flood data hook to fetch and display tiles
-  const { floodTiles, alertSummary, loading: dataLoading, error: dataError } = useFloodData(mapRef.current);
+  const { weatherInfluence, dataSource, alertSummary, error: dataError } = useFloodData(mapInstance, demoMode);
 
   const handleLocationSelect = (coordinates: [number, number], placeName: string) => {
     if (!mapRef.current) return;
@@ -88,6 +99,7 @@ const MapBackground: React.FC = () => {
         console.log('Map loaded successfully');
         setIsLoading(false);
         setMapError(null);
+        setMapInstance(mapRef.current);
       });
 
       // Update map center when user moves the map
@@ -167,7 +179,87 @@ const MapBackground: React.FC = () => {
       {!mapError && !isLoading && alertSummary && alertSummary.alerts && (
         <AlertNotifications 
           alerts={alertSummary.alerts}
+          demoMode={demoMode}
         />
+      )}
+
+      {/* Weather Data Indicator */}
+      {!mapError && !isLoading && weatherInfluence && (
+        <div className="weather-indicator">
+          <div 
+            className="weather-badge"
+            style={{ 
+              borderLeftColor: SEVERITY_COLORS[weatherInfluence.severity as keyof typeof SEVERITY_COLORS] 
+            }}
+          >
+            <div className="weather-badge-header">
+              <span className="weather-icon">🌧️</span>
+              <span className="weather-title">Live Weather</span>
+            </div>
+            <div className="weather-details">
+              {weatherInfluence.current_conditions && (
+                <>
+                  <p>{weatherInfluence.current_conditions.condition}</p>
+                  <p className="weather-stat">
+                    💧 Rain: {weatherInfluence.current_conditions.rain_1h_mm.toFixed(1)}mm/h
+                  </p>
+                  <p className="weather-stat">
+                    💦 Humidity: {weatherInfluence.current_conditions.humidity}%
+                  </p>
+                </>
+              )}
+              <p className="risk-level" style={{ color: SEVERITY_COLORS[weatherInfluence.severity as keyof typeof SEVERITY_COLORS] }}>
+                Risk: {weatherInfluence.risk_level}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Data Source Indicator */}
+      {!mapError && !isLoading && dataSource && (
+        <div className="data-source-indicator">
+          {dataSource === 'weather_enhanced' ? '📡 Weather-Enhanced Data' : '🗺️ Geographical Data'}
+        </div>
+      )}
+
+      {/* Demo Mode Toggle */}
+      {!mapError && !isLoading && (
+        <div className="demo-mode-toggle">
+          <button 
+            className={`demo-button ${demoMode ? 'active' : ''}`}
+            onClick={() => setDemoMode(!demoMode)}
+            title={demoMode ? 'Switch to real weather data' : 'Enable flood simulation demo'}
+          >
+            {demoMode ? '🌧️ Demo Mode ON' : '☀️ Real Weather'}
+          </button>
+          {demoMode && (
+            <span className="demo-label">Simulating heavy rainfall</span>
+          )}
+        </div>
+      )}
+
+      {/* ML Prediction Toggle Button */}
+      {!mapError && !isLoading && (
+        <button 
+          className={`ml-toggle-button ${showMLPanel ? 'active' : ''}`}
+          onClick={() => setShowMLPanel(!showMLPanel)}
+          title="Toggle ML Flood Prediction"
+        >
+          🤖 {showMLPanel ? 'Hide' : 'ML'} Prediction
+        </button>
+      )}
+
+      {/* ML Prediction Panel */}
+      {!mapError && !isLoading && showMLPanel && (
+        <div className="ml-panel-container">
+          <MLPredictionPanel
+            lat={mapCenter[1]}
+            lon={mapCenter[0]}
+            demoMode={demoMode}
+            onClose={() => setShowMLPanel(false)}
+          />
+        </div>
       )}
 
       {/* Flood Data Error */}

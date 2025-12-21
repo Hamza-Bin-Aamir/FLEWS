@@ -16,11 +16,17 @@ interface Alert {
 
 interface AlertNotificationsProps {
   alerts: Alert[];
+  demoMode?: boolean;
 }
 
-const AlertNotifications: React.FC<AlertNotificationsProps> = ({ alerts }) => {
+const AlertNotifications: React.FC<AlertNotificationsProps> = ({ alerts, demoMode }) => {
   const [visibleAlerts, setVisibleAlerts] = useState<Alert[]>([]);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+
+  // Reset dismissed alerts when demo mode changes
+  useEffect(() => {
+    setDismissedIds(new Set());
+  }, [demoMode]);
 
   useEffect(() => {
     // Only show alerts that haven't been dismissed
